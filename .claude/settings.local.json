@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm install)"
+      "Bash(npm install)",
+      "Bash(git pull:*)",
+      "Bash(del \"c:\\\\Users\\\\renwi\\\\Easy Posting\\\\easy posting app\\\\middleware.ts\")"
     ]
   }
 }

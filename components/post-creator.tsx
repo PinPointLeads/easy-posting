@@ -106,37 +106,27 @@ export function PostCreator() {
 
       if (imageError) throw imageError;
 
-      const { data: imageUrlData } = supabase.storage
-        .from("post-media")
-        .getPublicUrl(imagePath);
-
       // Upload voice note if exists
-      let voiceUrl = null;
+      let voicePath = null;
       if (audioBlob) {
-        const voicePath = `${user.id}/${Date.now()}.webm`;
+        voicePath = `${user.id}/${Date.now()}.webm`;
 
         const { error: voiceError } = await supabase.storage
           .from("voice-notes")
           .upload(voicePath, audioBlob);
 
         if (voiceError) throw voiceError;
-
-        const { data: voiceUrlData } = supabase.storage
-          .from("voice-notes")
-          .getPublicUrl(voicePath);
-
-        voiceUrl = voiceUrlData.publicUrl;
       }
 
-      // Insert into posts_queue
+      // Insert into posts table
       const { error: insertError } = await supabase
-        .from("posts_queue")
+        .from("posts")
         .insert({
           customer_id: user.id,
-          image_url: imageUrlData.publicUrl,
-          voice_url: voiceUrl,
-          caption: caption || null,
-          status: "pending",
+          image_path: imagePath,
+          voice_path: voicePath,
+          user_prompt: caption || null,
+          status: "processing",
         });
 
       if (insertError) throw insertError;
