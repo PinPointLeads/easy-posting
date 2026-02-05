@@ -15,8 +15,11 @@ export default function DashboardLayout({
           <div className="w-full max-w-5xl flex justify-between items-center p-3 px-5 text-sm">
             <div className="flex gap-5 items-center font-semibold">
               <Link href="/dashboard">Easy Posting</Link>
-              <Link href="/dashboard/settings" className="text-muted-foreground hover:text-foreground">
-                Settings
+              <Link
+                href="/dashboard/company-info"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                Companmy Info
               </Link>
             </div>
             <div className="flex items-center gap-4">
@@ -27,9 +30,7 @@ export default function DashboardLayout({
             </div>
           </div>
         </nav>
-        <div className="flex-1 w-full max-w-5xl p-5">
-          {children}
-        </div>
+        <div className="flex-1 w-full max-w-5xl p-5">{children}</div>
       </div>
     </main>
   );
