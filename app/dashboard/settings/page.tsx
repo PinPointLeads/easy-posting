@@ -1,21 +1,69 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { createClient } from "@/lib/supabase/client";
 
 export default function SettingsPage() {
   const [businessName, setBusinessName] = useState("");
   const [industry, setIndustry] = useState("");
   const [brandVoice, setBrandVoice] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  const handleSave = () => {
-    console.log({
-      businessName,
-      industry,
-      brandVoice,
-    });
+  const supabase = createClient();
+
+  // Load existing settings on mount
+  useEffect(() => {
+    async function loadSettings() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("brand_settings")
+        .select("business_name, industry, brand_voice")
+        .eq("customer_id", user.id)
+        .single();
+
+      if (data) {
+        setBusinessName(data.business_name || "");
+        setIndustry(data.industry || "");
+        setBrandVoice(data.brand_voice || "");
+      }
+      setIsLoading(false);
+    }
+    loadSettings();
+  }, []);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    setMessage(null);
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setMessage({ type: "error", text: "You must be logged in to save settings" });
+      setIsSaving(false);
+      return;
+    }
+
+    const { error } = await supabase
+      .from("brand_settings")
+      .upsert({
+        customer_id: user.id,
+        business_name: businessName,
+        industry: industry,
+        brand_voice: brandVoice,
+      }, { onConflict: "customer_id" });
+
+    if (error) {
+      setMessage({ type: "error", text: error.message });
+    } else {
+      setMessage({ type: "success", text: "Settings saved successfully!" });
+    }
+    setIsSaving(false);
   };
 
   return (
@@ -55,8 +103,14 @@ export default function SettingsPage() {
           />
         </div>
 
-        <Button onClick={handleSave} size="lg" className="w-full mt-2">
-          Save Settings
+        {message && (
+          <p className={`text-sm ${message.type === "error" ? "text-red-500" : "text-green-500"}`}>
+            {message.text}
+          </p>
+        )}
+
+        <Button onClick={handleSave} size="lg" className="w-full mt-2" disabled={isSaving || isLoading}>
+          {isSaving ? "Saving..." : "Save Settings"}
         </Button>
       </div>
     </div>

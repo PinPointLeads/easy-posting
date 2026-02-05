@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { PostCreator } from "@/components/post-creator";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -11,8 +12,8 @@ export default async function DashboardPage() {
 
   return (
     <div className="w-full max-w-lg mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
-      <p className="text-muted-foreground">Welcome back!</p>
+      <h1 className="text-2xl font-bold mb-6">Create Post</h1>
+      <PostCreator />
     </div>
   );
 }
