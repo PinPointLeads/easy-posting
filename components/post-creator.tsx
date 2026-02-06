@@ -8,12 +8,12 @@ import { createClient } from "@/lib/supabase/client";
 export function PostCreator() {
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [caption, setCaption] = useState("");
+  const [message, setMessage] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -61,7 +61,7 @@ export function PostCreator() {
       mediaRecorder.start();
       setIsRecording(true);
     } catch (error) {
-      setMessage({ type: "error", text: "Could not access microphone. Please allow microphone access." });
+      setFeedback({ type: "error", text: "Could not access microphone. Please allow microphone access." });
     }
   };
 
@@ -80,17 +80,17 @@ export function PostCreator() {
   // Submit post
   const handleSubmit = async () => {
     if (!image) {
-      setMessage({ type: "error", text: "Please select an image" });
+      setFeedback({ type: "error", text: "Please select an image" });
       return;
     }
 
-    if (!caption && !audioBlob) {
-      setMessage({ type: "error", text: "Please add a caption or record a voice note" });
+    if (!message && !audioBlob) {
+      setFeedback({ type: "error", text: "Please add a message or record a voice note" });
       return;
     }
 
     setIsSubmitting(true);
-    setMessage(null);
+    setFeedback(null);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -125,7 +125,7 @@ export function PostCreator() {
           customer_id: user.id,
           image_path: imagePath,
           voice_path: voicePath,
-          user_prompt: caption || null,
+          message: message || null,
           status: "processing",
         });
 
@@ -134,12 +134,12 @@ export function PostCreator() {
       // TODO: Send webhook to n8n here
       // await fetch(process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL, { ... })
 
-      setMessage({ type: "success", text: "Post submitted successfully! It will be published shortly." });
+      setFeedback({ type: "success", text: "Post submitted successfully! It will be published shortly." });
 
       // Reset form
       setImage(null);
       setImagePreview(null);
-      setCaption("");
+      setMessage("");
       setAudioBlob(null);
       setAudioUrl(null);
       if (fileInputRef.current) {
@@ -147,7 +147,7 @@ export function PostCreator() {
       }
 
     } catch (error) {
-      setMessage({
+      setFeedback({
         type: "error",
         text: error instanceof Error ? error.message : "Failed to submit post"
       });
@@ -218,14 +218,14 @@ export function PostCreator() {
         )}
       </div>
 
-      {/* Caption */}
+      {/* Message */}
       <div className="flex flex-col gap-2">
-        <Label htmlFor="caption">Caption {audioBlob ? "(optional)" : ""}</Label>
+        <Label htmlFor="message">Message {audioBlob ? "(optional)" : ""}</Label>
         <textarea
-          id="caption"
-          value={caption}
-          onChange={(e) => setCaption(e.target.value)}
-          placeholder="Write your caption here... AI will optimize it for each platform."
+          id="message"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder="Write your message here... AI will optimize it for each platform."
           rows={4}
           className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm resize-none"
         />
@@ -236,10 +236,10 @@ export function PostCreator() {
         Your post will be optimized for Facebook, Instagram, LinkedIn, and Google Business Profile.
       </p>
 
-      {/* Status message */}
-      {message && (
-        <p className={`text-sm ${message.type === "error" ? "text-red-500" : "text-green-500"}`}>
-          {message.text}
+      {/* Status feedback */}
+      {feedback && (
+        <p className={`text-sm ${feedback.type === "error" ? "text-red-500" : "text-green-500"}`}>
+          {feedback.text}
         </p>
       )}
 

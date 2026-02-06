@@ -4,13 +4,14 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { TagInput } from "@/components/ui/tag-input";
 import { createClient } from "@/lib/supabase/client";
 
 export default function CompanyInfoPage() {
   const [fullname, setFullName] = useState("");
   const [businessName, setBusinessName] = useState("");
   const [website, setWebsite] = useState("");
-  const [serviceArea, setServiceArea] = useState("");
+  const [serviceArea, setServiceArea] = useState<string[]>([]);
   const [industry, setIndustry] = useState("");
   const [postStyle, setPostStyle] = useState<string[]>([]);
 
@@ -41,7 +42,7 @@ export default function CompanyInfoPage() {
       }
 
       const { data } = await supabase
-        .from("brand_settings")
+        .from("customer_info")
         .select(
           "fullname, business_name, website, service_area, industry, post_style",
         )
@@ -52,7 +53,7 @@ export default function CompanyInfoPage() {
         setFullName(data.fullname || "");
         setBusinessName(data.business_name || "");
         setWebsite(data.website || "");
-        setServiceArea(data.service_area || "");
+        setServiceArea(data.service_area || []);
         setIndustry(data.industry || "");
         setPostStyle(data.post_style || []);
       }
@@ -80,7 +81,7 @@ export default function CompanyInfoPage() {
       return;
     }
 
-    const { error } = await supabase.from("brand_settings").upsert(
+    const { error } = await supabase.from("customer_info").upsert(
       {
         customer_id: user.id,
         fullname: fullname,
@@ -141,12 +142,12 @@ export default function CompanyInfoPage() {
         </div>
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor="serviceArea">Service Area</Label>
-          <Input
-            id="serviceArea"
+          <Label>Service Area</Label>
+          <p className="text-sm text-muted-foreground">Add the cities or regions you serve</p>
+          <TagInput
             value={serviceArea}
-            onChange={(e) => setServiceArea(e.target.value)}
-            placeholder="e.g. Manchester & surrounding areas"
+            onChange={setServiceArea}
+            placeholder="e.g., London, Manchester, Birmingham"
           />
         </div>
 
@@ -183,9 +184,8 @@ export default function CompanyInfoPage() {
 
         {message && (
           <p
-            className={`text-sm ${
-              message.type === "error" ? "text-red-500" : "text-green-500"
-            }`}
+            className={`text-sm ${message.type === "error" ? "text-red-500" : "text-green-500"
+              }`}
           >
             {message.text}
           </p>
